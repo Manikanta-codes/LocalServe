@@ -1,0 +1,27 @@
+# Node / Frontend dependencies & build output
+node_modules/
+frontend/node_modules/
+frontend/dist/
+frontend/dist-ssr/
+*.log
+npm-debug.log*
+
+# Java / Maven build output
+target/
+backend/target/
+*.class
+
+# IDE and OS metadata
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.DS_Store
+
+# Environment variables
+.env
+.env.local
+.env.*.local
