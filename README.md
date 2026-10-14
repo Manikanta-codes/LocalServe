@@ -62,18 +62,33 @@ LocalServe/
 ## 🗄️ MySQL Database Setup
 
 1. Start your local MySQL Server on default port `3306`.
-2. Create the database (or let Spring Boot automatically create it):
+2. Create the database:
    ```sql
    CREATE DATABASE IF NOT EXISTS localserve;
    ```
-3. Update database credentials in `backend/src/main/resources/application.properties` or set Environment Variables:
-   - `SPRING_DATASOURCE_URL`: `jdbc:mysql://localhost:3306/localserve`
-   - `SPRING_DATASOURCE_USERNAME`: `root`
-   - `SPRING_DATASOURCE_PASSWORD`: `root`
+3. Set the following environment variables for the backend process (the application does not silently fall back to local database credentials):
+   - `SPRING_DATASOURCE_URL`: `jdbc:mysql://localhost:3306/localserve?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC`
+   - `SPRING_DATASOURCE_USERNAME`: your local MySQL username
+   - `SPRING_DATASOURCE_PASSWORD`: your local MySQL password
 
 ---
 
 ## 🚀 How to Run the Application
+
+### Production deployment configuration
+
+The frontend requires `VITE_API_URL` to be set in the Vercel project before building. Set it to the backend origin, for example `https://localserve-backend-o280.onrender.com` (do not add `/api`; the frontend adds it). Vite embeds this value at build time, so redeploy the frontend after changing it.
+
+In the Render backend service, configure these environment variables:
+
+- `SPRING_DATASOURCE_URL`: Copy the JDBC URL from the Aiven service's **Overview → Quick connect → Java** connection details. Use the current Aiven host, port, database, and TLS query parameter (`sslmode=require`); do not reuse an old hostname.
+- `SPRING_DATASOURCE_USERNAME` and `SPRING_DATASOURCE_PASSWORD`: Use the credentials shown by Aiven. Keep them in Render's environment settings, not in source code.
+- `JWT_SECRET`: A private signing secret of at least 32 characters.
+- `APP_CORS_ALLOWED_ORIGINS`: Comma-separated Vercel origins, with no trailing slash. Include every hostname that users actually visit, such as `https://local-serve-service.vercel.app` and `https://local-serve-kappa.vercel.app` if both remain active.
+
+Render supplies `PORT`; the backend binds to it through `server.port=${PORT:8081}`. Database connection waits are bounded so requests fail instead of waiting on the driver's longer defaults.
+
+For local development, set `SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME`, `SPRING_DATASOURCE_PASSWORD`, and `JWT_SECRET` in the backend environment before starting it. Never use a production database URL in a local `.env` file that is committed to Git.
 
 ### **1. Run Backend (Port 8081)**
 Open a terminal in `LocalServe/backend` and execute:

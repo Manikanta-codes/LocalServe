@@ -1,7 +1,11 @@
 import axios from 'axios';
 
-const configuredApiUrl = import.meta.env.VITE_API_URL?.trim() || 'http://localhost:8081';
-const API_BASE_URL = `${configuredApiUrl.replace(/\/+$/, '').replace(/(?:\/api)+$/i, '')}/api`;
+const configuredApiUrl = import.meta.env.VITE_API_URL?.trim();
+const apiOrigin = configuredApiUrl || (import.meta.env.DEV ? 'http://localhost:8081' : '');
+const API_BASE_URL = apiOrigin
+  ? `${apiOrigin.replace(/\/+$/, '').replace(/(?:\/api)+$/i, '')}/api`
+  : '/api';
+const missingProductionApiUrl = !configuredApiUrl && !import.meta.env.DEV;
 const LOGIN_PATH = '/auth/login';
 
 const logLoginTiming = (config, status) => {
@@ -26,6 +30,12 @@ const axiosInstance = axios.create({
 // Interceptor to add Authorization header
 axiosInstance.interceptors.request.use(
   (config) => {
+    if (missingProductionApiUrl) {
+      const error = new Error('The production API URL is not configured. Set VITE_API_URL in Vercel and redeploy.');
+      error.code = 'API_NOT_CONFIGURED';
+      return Promise.reject(error);
+    }
+
     if (config.url === LOGIN_PATH) {
       config.requestStartedAt = performance.now();
     }

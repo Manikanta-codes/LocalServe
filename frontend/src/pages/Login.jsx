@@ -33,7 +33,9 @@ const Login = () => {
         navigate('/services');
       }
     } catch (err) {
-      if (err.code === 'ECONNABORTED' || err.code === 'ETIMEDOUT') {
+      if (err.code === 'API_NOT_CONFIGURED') {
+        setError('The login service is not configured. Please contact the site administrator.');
+      } else if (err.code === 'ECONNABORTED' || err.code === 'ETIMEDOUT') {
         setError('The login request timed out. Please try again in a moment.');
       } else if (!err.response) {
         setError('Unable to reach the login service. Check your connection and try again.');
