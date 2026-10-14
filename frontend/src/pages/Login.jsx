@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import ErrorMessage from '../components/ErrorMessage';
@@ -8,12 +8,16 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const submissionInProgress = useRef(false);
 
   const { login } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (submissionInProgress.current) return;
+
+    submissionInProgress.current = true;
     setError('');
     setSubmitting(true);
 
@@ -29,8 +33,19 @@ const Login = () => {
         navigate('/services');
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to login. Please check your credentials.');
+      if (err.code === 'ECONNABORTED' || err.code === 'ETIMEDOUT') {
+        setError('The login request timed out. Please try again in a moment.');
+      } else if (!err.response) {
+        setError('Unable to reach the login service. Check your connection and try again.');
+      } else if (err.response.status >= 500) {
+        setError('The login service is temporarily unavailable. Please try again later.');
+      } else if (err.response.status === 401 || err.response.status === 400) {
+        setError('Email or password is incorrect. Please check your details and try again.');
+      } else {
+        setError(err.response.data?.message || 'Unable to log in. Please try again.');
+      }
     } finally {
+      submissionInProgress.current = false;
       setSubmitting(false);
     }
   };
